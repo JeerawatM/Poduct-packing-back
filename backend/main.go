@@ -44,20 +44,22 @@
 package main
 
 import (
+	"fmt"
+	"go-backend/routes"
 	"log"
 	"os"
 
-	"github.com/gin-gonic/gin"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
 )
 
-var db *gorm.DB // Global DB Connection
+var db *gorm.DB
 
 func connectDB() {
-	dsn := "host=ep-crimson-firefly-a15c9507-pooler.ap-southeast-1.aws.neon.tech user=neondb_admin password=npg_FsqMG6bgpRo0 dbname=neondb port=10000 sslmode=disable" // ดึงค่าจาก Environment Variable
+	dsn := os.Getenv("DATABASE_URL")
 	var err error
-	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{}) // ใช้ตัวแปร db
+	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
 	if err != nil {
 		log.Fatal("❌ Failed to connect to database:", err)
@@ -66,27 +68,21 @@ func connectDB() {
 	log.Println("✅ Connected to Neon PostgreSQL!")
 }
 
-func setupRouter() *gin.Engine {
-	router := gin.Default()
-
-	// 🔹 Example Route
-	router.GET("/", func(c *gin.Context) {
-		c.JSON(200, gin.H{"message": "Hello from Backend!"})
-	})
-
-	return router
-}
-
 func main() {
-	connectDB() // เชื่อมต่อ DB
+	connectDB()
 
-	// 🔹 อ่าน PORT จาก Environment ถ้าไม่มีให้ใช้ค่า Default
+	// ใช้ Router
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Fatal("❌ Failed to get *sql.DB from *gorm.DB:", err)
+	}
+	r := routes.Router(sqlDB)
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "10000"
 	}
 
-	router := setupRouter()
-	log.Printf("🚀 Server is running on port %s", port)
-	router.Run(":" + port) // Start Server
+	fmt.Println("🚀 Server is running on port:", port)
+	r.Run(":" + port)
 }
