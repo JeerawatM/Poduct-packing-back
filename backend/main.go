@@ -2,45 +2,45 @@ package main
 
 import (
 	"fmt"
+	"go-backend/routes"
 	"log"
-	"net/http"
 	"os"
 
-	"github.com/gin-gonic/gin"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 var db *gorm.DB
 
+// เชื่อมต่อฐานข้อมูล PostgreSQL
 func connectDB() {
-	dsn := os.Getenv("DATABASE_URL")
+	dsn := os.Getenv("DATABASE_URL") // ดึงค่าการเชื่อมต่อจากตัวแปรแวดล้อม
 	var err error
 	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+
 	if err != nil {
 		log.Fatal("❌ Failed to connect to database:", err)
 	}
+
 	log.Println("✅ Connected to Neon PostgreSQL!")
 }
 
 func main() {
-	connectDB()
+	connectDB() // เชื่อมต่อฐานข้อมูล
 
-	// ใช้ Gin เป็น Web Server
-	r := gin.Default()
+	// สร้าง Router และเชื่อมกับ routes.go
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Fatal("❌ Failed to get *sql.DB from *gorm.DB:", err)
+	}
+	r := routes.Router(sqlDB)
 
-	// ทดสอบ API ว่าใช้งานได้
-	r.GET("/", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"message": "🚀 Backend is running!"})
-	})
-
-	// ใช้ PORT จาก Environment หรือค่าเริ่มต้น 8080
+	// ตั้งค่าหมายเลขพอร์ต (ใช้ค่าจาก ENV ถ้ามี)
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "10000"
+		port = "10000" // ค่าเริ่มต้น
 	}
-	fmt.Println("🌍 Server is running on port " + port)
 
-	// Start server
-	r.Run(":" + port)
+	fmt.Println("🚀 Server is running on port:", port)
+	r.Run(":" + port) // เริ่มเซิร์ฟเวอร์
 }
