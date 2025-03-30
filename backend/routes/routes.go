@@ -20,6 +20,11 @@ func Router(db *sql.DB) *gin.Engine {
 	}
 
 	router.Use(cors.New(config))
+	router.GET("/", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"message": "Welcome to the API!",
+		})
+	})
 
 	// ================= GET =================
 	router.GET("/api/products", func(c *gin.Context) {
