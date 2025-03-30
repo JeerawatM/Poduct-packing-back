@@ -1,9 +1,50 @@
+// package main
+
+// import (
+// 	"fmt"
+// 	"go-backend/config"
+// 	"go-backend/database"
+// 	"go-backend/routes"
+// )
+
+//	func main() {
+//		fmt.Println("System Start")
+//		config.LoadConfig()
+//		db := database.InitDB()
+//		defer db.Close()
+//		router := routes.Router(db)
+//		router.Run(":8080")
+//	}
+// package main
+
+// import (
+// 	"gorm.io/driver/postgres"
+// 	"gorm.io/gorm"
+// 	"log"
+// 	"os"
+// )
+
+// var db *gorm.DB // ประกาศตัวแปร db ให้เป็น global
+
+// func connectDB() {
+// 	dsn := os.Getenv("DATABASE_URL") // ดึงค่าจาก Environment Variable
+// 	var err error
+// 	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{}) // ใช้ตัวแปร db
+
+// 	if err != nil {
+// 		log.Fatal("❌ Failed to connect to database:", err)
+// 	}
+
+// 	log.Println("✅ Connected to Neon PostgreSQL!")
+// }
+
+//	func main() {
+//		connectDB()
+//	}
 package main
 
 import (
-	"fmt"
 	"log"
-	"net/http"
 	"os"
 
 	"github.com/gin-gonic/gin"
@@ -11,36 +52,41 @@ import (
 	"gorm.io/gorm"
 )
 
-var db *gorm.DB
+var db *gorm.DB // Global DB Connection
 
 func connectDB() {
-	dsn := os.Getenv("DATABASE_URL")
+	dsn := "host=ep-crimson-firefly-a15c9507-pooler.ap-southeast-1.aws.neon.tech user=neondb_admin password=npg_FsqMG6bgpRo0 dbname=neondb port=10000 sslmode=disable" // ดึงค่าจาก Environment Variable
 	var err error
-	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{}) // ใช้ตัวแปร db
+
 	if err != nil {
 		log.Fatal("❌ Failed to connect to database:", err)
 	}
+
 	log.Println("✅ Connected to Neon PostgreSQL!")
 }
 
-func main() {
-	connectDB()
+func setupRouter() *gin.Engine {
+	router := gin.Default()
 
-	// ใช้ Gin เป็น Web Server
-	r := gin.Default()
-
-	// ทดสอบ API ว่าใช้งานได้
-	r.GET("/", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"message": "🚀 Backend is running!"})
+	// 🔹 Example Route
+	router.GET("/", func(c *gin.Context) {
+		c.JSON(200, gin.H{"message": "Hello from Backend!"})
 	})
 
-	// ใช้ PORT จาก Environment หรือค่าเริ่มต้น 8080
+	return router
+}
+
+func main() {
+	connectDB() // เชื่อมต่อ DB
+
+	// 🔹 อ่าน PORT จาก Environment ถ้าไม่มีให้ใช้ค่า Default
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "10000"
 	}
-	fmt.Println("🌍 Server is running on port " + port)
 
-	// Start server
-	r.Run(":" + port)
+	router := setupRouter()
+	log.Printf("🚀 Server is running on port %s", port)
+	router.Run(":" + port) // Start Server
 }
