@@ -37,7 +37,7 @@ func main() {
 	// ใช้ PORT จาก Environment หรือค่าเริ่มต้น 8080
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080"
+		port = "10000"
 	}
 	fmt.Println("🌍 Server is running on port " + port)
 
